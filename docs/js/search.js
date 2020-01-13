@@ -11,8 +11,11 @@
   searchInput.addEventListener('keyup', handleSearchInputKeyup);
 
   function handleGlobalKeyup(e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || document.activeElement === searchInput) {
+      return;
+    }
     var c = String.fromCharCode(e.keyCode).toLowerCase();
-    if (c.match(/\w/) && document.activeElement !== searchInput) {
+    if (c.match(/\w/)) {
       searchInput.focus();
       searchInput.value = c;
       handleSearchInputKeyup();
@@ -37,9 +40,11 @@
       return;
     }
 
-    setSearchStyle(query);
-    setTabindex(query);
-    setFocus(query);
+    var splitedQuery = query.split(/\s+/);
+
+    setSearchStyle(splitedQuery);
+    setTabindex(splitedQuery);
+    setFocus(splitedQuery);
   }
 
   searchInput.addEventListener('blur', function () {
@@ -61,7 +66,7 @@
     });
   }
 
-  function setSearchStyle(query) {
+  function setSearchStyle(splitedQuery) {
     searchStyle.innerHTML = `
       .site-bookmark-category {
         display: none;
@@ -69,28 +74,32 @@
       .site-bookmark-a {
         opacity: 0.3;
       }
-      [data-name*="${query}"] {
+      ${generateQuerySelectorQuery(splitedQuery)} {
         order: -1;
         -ms-flex-order: -1;
       }
-      [data-name*="${query}"] .site-bookmark-a {
+      ${generateQuerySelectorQuery(splitedQuery)} .site-bookmark-a {
         opacity: 1;
       }
     `;
   }
 
-  function setTabindex(query) {
-    var filteredItems = document.querySelectorAll(`[data-name*="${query}"] .site-bookmark-a`);
+  function setTabindex(splitedQuery) {
+    var filteredItems = document.querySelectorAll(`${generateQuerySelectorQuery(splitedQuery)} .site-bookmark-a`);
 
     filteredItems.forEach((item) => {
       item.setAttribute('tabindex', '2');
     });
   }
 
-  function setFocus(query) {
-    var firstItem = document.querySelector(`[data-name*="${query}"] .site-bookmark-a`);
+  function setFocus(splitedQuery) {
+    var firstItem = document.querySelector(`${generateQuerySelectorQuery(splitedQuery)} .site-bookmark-a`);
     if (firstItem) {
       firstItem.classList.add('site-bookmark-a-focus');
     }
+  }
+
+  function generateQuerySelectorQuery(splitedQuery) {
+    return splitedQuery.map(query => `[data-name*="${query}"]`).join('');
   }
 }());
